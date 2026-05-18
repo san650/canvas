@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#14110F"/>
+  <!-- Frame (walnut) -->
+  <rect x="30" y="55" width="140" height="90" fill="#5C4630"/>
+  <!-- Mat (cream) -->
+  <rect x="42" y="67" width="116" height="66" fill="#F4EFE4"/>
+  <!-- Picture (brass) -->
+  <rect x="56" y="82" width="88" height="36" fill="#E5A24A"/>
+</svg>

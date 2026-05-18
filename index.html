@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Canvas</title>
+  <meta name="description" content="Compare canvas and print sizes." />
+  <meta name="theme-color" content="#14110F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Canvas" />
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+
+  <link rel="apple-touch-startup-image" href="./splash/splash-1290x2796.png"
+        media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-1179x2556.png"
+        media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-1284x2778.png"
+        media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-1170x2532.png"
+        media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-1125x2436.png"
+        media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-1242x2688.png"
+        media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-828x1792.png"
+        media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-1242x2208.png"
+        media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+  <link rel="apple-touch-startup-image" href="./splash/splash-750x1334.png"
+        media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main id="view"></main>
+
+  <dialog id="custom-dialog" class="custom-modal">
+    <header class="custom-modal-head">
+      <h2>Add a size</h2>
+      <button type="button" class="custom-modal-close" data-close-custom-form aria-label="Close">✕</button>
+    </header>
+    <form class="custom-form-row" data-custom-form autocomplete="off">
+      <input type="number" name="width"  min="0.1" step="0.1" inputmode="decimal" placeholder="W" required />
+      <span class="custom-form-x" aria-hidden="true">×</span>
+      <input type="number" name="height" min="0.1" step="0.1" inputmode="decimal" placeholder="H" required />
+      <select name="unit" aria-label="Unit">
+        <option value="cm">cm</option>
+        <option value="in">in</option>
+      </select>
+      <button type="submit" class="custom-form-add" aria-label="Add">Add</button>
+    </form>
+  </dialog>
+
+  <!--
+    Templates. Each template is cloned and filled at render time. Slots are
+    selected with [data-slot="…"]; SVG shape templates wrap their inner element
+    in an <svg> so the HTML parser assigns the SVG namespace correctly — the
+    wrapper is discarded and only the inner element is reused.
+  -->
+
+  <template id="tpl-app">
+    <header class="app-head">
+      <h1>Canvas</h1>
+      <p class="app-sub">Compare canvas and print sizes.</p>
+    </header>
+    <section class="compare">
+      <nav class="tabs" role="tablist" aria-label="Arrangement" data-slot="tabs"></nav>
+      <section class="viz" aria-label="Visualization" data-slot="viz"></section>
+    </section>
+    <section class="selection" data-slot="selection"></section>
+    <section class="grouped-section" data-slot="grouped"></section>
+  </template>
+
+  <template id="tpl-grouped-section">
+    <header class="section-head">
+      <h2>Aspect ratios</h2>
+      <span class="section-hint">Every size, clustered by ratio</span>
+    </header>
+    <div class="grouped" data-slot="list"></div>
+  </template>
+
+  <template id="tpl-tab">
+    <button type="button" class="tab" role="tab" data-slot="self"></button>
+  </template>
+
+  <template id="tpl-selection">
+    <header class="selection-head">
+      <h2>Compare</h2>
+      <span class="selection-count" data-slot="count"></span>
+    </header>
+    <div data-slot="blocks"></div>
+  </template>
+
+  <template id="tpl-cat-block">
+    <div class="cat-block">
+      <div class="cat-head">
+        <h3 class="cat-name" data-slot="title"></h3>
+        <span class="cat-rule" aria-hidden="true"></span>
+        <button type="button" class="cat-add" data-slot="add" hidden>＋</button>
+      </div>
+      <ul class="cat-list" data-slot="list"></ul>
+    </div>
+  </template>
+
+  <template id="tpl-item">
+    <li>
+      <label class="item">
+        <input type="checkbox" data-slot="checkbox" />
+        <span class="item-swatch" data-slot="swatch" aria-hidden="true"></span>
+        <span class="item-main">
+          <span class="item-name" data-slot="name"></span>
+          <span class="item-alt" data-slot="alt"></span>
+        </span>
+        <span class="item-aspect" data-slot="aspect"></span>
+      </label>
+      <div class="item-decorations" data-slot="decorations"></div>
+    </li>
+  </template>
+
+  <template id="tpl-decoration">
+    <div class="decoration-row">
+      <span class="decoration-label" data-slot="label"></span>
+      <div class="decoration-controls">
+        <button type="button" class="decoration-preset" data-slot="preset0" data-value="0">–</button>
+        <button type="button" class="decoration-preset" data-slot="preset1" data-value="1">1</button>
+        <button type="button" class="decoration-preset" data-slot="preset2" data-value="2">2</button>
+        <input type="number" class="decoration-input" data-slot="input"
+               min="0" max="20" step="0.1" inputmode="decimal" placeholder="cm" />
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-viz-svg">
+    <svg class="viz-svg" preserveAspectRatio="xMidYMid meet" aria-label="Visualization" data-slot="self">
+      <defs>
+        <pattern id="grid-minor" width="10" height="10" patternUnits="userSpaceOnUse">
+          <path class="grid-minor" d="M 10 0 L 0 0 0 10" />
+        </pattern>
+        <pattern id="grid-major" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path class="grid-major" d="M 50 0 L 0 0 0 50" />
+        </pattern>
+        <!-- Soft-edged mask: solid in the workspace center, feathered to
+             transparent at the edges so dragged rectangles fade out softly. -->
+        <filter id="edge-blur" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="4" />
+        </filter>
+        <mask id="workspace-mask" maskUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="240">
+          <rect x="-20" y="-20" width="240" height="240" fill="black" />
+          <rect x="6" y="6" width="188" height="188" fill="white" filter="url(#edge-blur)" />
+        </mask>
+      </defs>
+      <g mask="url(#workspace-mask)">
+        <rect width="100%" height="100%" fill="url(#grid-minor)" />
+        <rect width="100%" height="100%" fill="url(#grid-major)" />
+      </g>
+    </svg>
+  </template>
+
+  <template id="tpl-person">
+    <svg>
+      <g class="shape shape-person">
+        <circle cx="25" cy="13" r="11" />
+        <path d="M 9 28 L 41 28 Q 43 28 43 31 L 38 78 L 38 168 Q 38 170 36 170 L 28 170 Q 26 170 26 168 L 26 110 L 24 110 L 24 168 Q 24 170 22 170 L 14 170 Q 12 170 12 168 L 12 78 L 7 31 Q 7 28 9 28 Z" />
+        <!-- Arms hanging down past the hips. -->
+        <rect x="0.5" y="30" width="6.5" height="68" rx="3.2" />
+        <rect x="43" y="30" width="6.5" height="68" rx="3.2" />
+      </g>
+    </svg>
+  </template>
+
+  <template id="tpl-bucket">
+    <section class="bucket">
+      <header class="bucket-head">
+        <span class="bucket-label" data-slot="label"></span>
+        <span class="bucket-hint">aspect ratio</span>
+      </header>
+      <div class="bucket-body" data-slot="body"></div>
+    </section>
+  </template>
+
+  <template id="tpl-bucket-cat">
+    <div class="bucket-cat">
+      <h3 class="bucket-cat-name" data-slot="title"></h3>
+      <ul class="bucket-list" data-slot="list"></ul>
+    </div>
+  </template>
+
+  <template id="tpl-bucket-item">
+    <li class="bucket-item">
+      <span class="item-name" data-slot="name"></span>
+      <span class="item-alt" data-slot="alt"></span>
+    </li>
+  </template>
+
+  <script type="module" src="./app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
+</body>
+</html>
