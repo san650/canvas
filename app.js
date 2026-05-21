@@ -341,7 +341,7 @@ const buildCompareViz = (state) => {
   svg.setAttribute('viewBox', `0 0 ${WORKSPACE} ${WORKSPACE}`);
 
   // Person centered in workspace, behind everything as scale context.
-  const personX = (WORKSPACE - REFERENCE.widthCm) / 2;
+  const personX = 0;
   const personY = (WORKSPACE - REFERENCE.heightCm) / 2;
   svg.appendChild(buildPerson(personX, personY));
 
